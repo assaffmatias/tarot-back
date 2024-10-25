@@ -1,0 +1,32 @@
+[
+  {
+    "rate": 5,
+    "message": "Una experiencia reveladora. Me ayudó a entender mi relación de una manera más profunda.",
+    "service": 0,
+    "user": 1
+  },
+  {
+    "rate": 4,
+    "message": "Muy buena lectura, pero me hubiera gustado más detalle.",
+    "service": 0,
+    "user": 4
+  },
+  {
+    "rate": 5,
+    "message": "Excelente consulta espiritual. Muy recomendable.",
+    "service": 1,
+    "user": 1
+  },
+  {
+    "rate": 4,
+    "message": "Me ayudó a clarificar mis dudas sobre mi carrera profesional.",
+    "service": 2,
+    "user": 4
+  },
+  {
+    "rate": 3,
+    "message": "La lectura fue buena, pero esperaba más información sobre mi salud.",
+    "service": 3,
+    "user": 1
+  }
+]

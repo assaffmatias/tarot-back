@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://accounts.google.com/gsi/client" async></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./js/google.js"></script>
+    <title>Tarot Arcano</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        /* justify-content: center; */
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f9;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+      .container {
+        max-width: 400px;
+        margin-top: 3rem;
+        margin-left: 2em;
+        margin-right: 2em;
+        text-align: center;
+        padding: 20px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .description {
+        color: #555;
+        margin-bottom: 20px;
+        font-size: 16px;
+      }
+      .g_id_signin {
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Inicio de Sesión - Tarot Arcano</h1>
+      <p class="description">
+        Inicia sesión con tu cuenta de Google para acceder a todas las
+        funcionalidades de Tarot Arcano. Si no tienes una cuenta, puedes crear
+        una en el sitio web de Google.
+      </p>
+      <div
+        id="g_id_onload"
+        data-client_id="498210699921-441b6b497ufje4g7su9q02sniu7vpjke.apps.googleusercontent.com"
+        data-callback="handleCredentialResponse"
+      ></div>
+      <div
+        class="g_id_signin"
+        data-type="standard"
+        data-size="large"
+        data-theme="outline"
+        data-text="sign_in_with"
+        data-shape="rectangular"
+        data-logo_alignment="left"
+      ></div>
+    </div>
+  </body>
+</html>

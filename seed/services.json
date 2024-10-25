@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Lectura de Tarot de Amor",
+    "description": "Explora las cartas que revelan detalles sobre tu vida amorosa y relaciones.",
+    "price": 50,
+    "user": 0,
+    "tags": [0]
+  },
+  {
+    "name": "Consulta Espiritual Profunda",
+    "description": "Una lectura que te conecta con tu ser interior y te guía en tu camino espiritual.",
+    "price": 75,
+    "user": 0,
+    "tags": [3]
+  },
+  {
+    "name": "Predicciones para la Carrera",
+    "description": "Obtén información sobre tu futuro profesional y las decisiones laborales que te esperan.",
+    "price": 60,
+    "user": 3,
+    "tags": [2]
+  },
+  {
+    "name": "Lectura de Salud y Bienestar",
+    "description": "Descubre cómo las cartas pueden influir en tu salud y bienestar.",
+    "price": 55,
+    "user": 3,
+    "tags": [1]
+  }
+]

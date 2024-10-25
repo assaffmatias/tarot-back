@@ -1,0 +1,26 @@
+[
+  {
+    "client": 1,
+    "seller": 0,
+    "price": 50,
+    "service": 0
+  },
+  {
+    "client": 4,
+    "seller": 0,
+    "price": 75,
+    "service": 1
+  },
+  {
+    "client": 1,
+    "seller": 3,
+    "price": 60,
+    "service": 2
+  },
+  {
+    "client": 4,
+    "seller": 3,
+    "price": 55,
+    "service": 3
+  }
+]

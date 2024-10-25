@@ -1,0 +1,168 @@
+[
+  {
+    "title": "Cuestionario para Filtrar Tarotistas - Cuestionario A",
+    "level": "básico",
+    "questions": [
+      {
+        "question": "¿Cuántos arcanos mayores hay en una baraja de tarot tradicional?",
+        "choices": ["22", "56", "78"],
+        "correct_answer": "22",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Qué representa el Arcano Mayor 'La Emperatriz'?",
+        "choices": [
+          "La sabiduría y el conocimiento",
+          "La creatividad y la fertilidad",
+          "La justicia y el equilibrio"
+        ],
+        "correct_answer": "La creatividad y la fertilidad",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Cuál es la diferencia principal entre los arcanos mayores y los arcanos menores?",
+        "choices": [
+          "Los arcanos mayores son más antiguos",
+          "Los arcanos mayores tienen un significado más profundo y universal",
+          "Los arcanos menores solo se usan en lecturas específicas"
+        ],
+        "correct_answer": "Los arcanos mayores tienen un significado más profundo y universal",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Qué significa generalmente el 'As de Copas' en una lectura?",
+        "choices": [
+          "Un nuevo comienzo emocional o espiritual",
+          "Un conflicto inminente",
+          "Una pérdida financiera"
+        ],
+        "correct_answer": "Un nuevo comienzo emocional o espiritual",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Qué carta del tarot se asocia comúnmente con los cambios y las transformaciones?",
+        "choices": ["La Torre", "La Muerte", "El Sol"],
+        "correct_answer": "La Muerte",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Cómo interpretas la combinación de 'El Mago' y 'La Estrella' en una tirada?",
+        "type": "open",
+        "points": 5,
+        "guide": "La combinación de 'El Mago' y 'La Estrella' sugiere que el consultante tiene el poder de manifestar sus sueños y aspiraciones. 'El Mago' representa acción y habilidades, mientras que 'La Estrella' indica esperanza y guía. Juntas, estas cartas sugieren un período de inspiración y logro personal si se actúa con confianza y propósito."
+      },
+      {
+        "question": "Describe brevemente qué simboliza el '10 de Espadas' y cómo puede influir en una lectura.",
+        "type": "open",
+        "points": 5,
+        "guide": "El '10 de Espadas' representa el final de una situación dolorosa o un colapso. En una lectura, puede señalar el fin de una fase difícil o una traición que ya no puede empeorar. Aunque indica dolor, también sugiere que es hora de comenzar de nuevo."
+      },
+      {
+        "question": "Si en una lectura aparecen juntas 'El Sol' y 'El Loco', ¿qué interpretación podrías dar sobre el futuro del consultante?",
+        "type": "open",
+        "points": 5,
+        "guide": "'El Sol' y 'El Loco' juntos sugieren un futuro optimista y lleno de nuevas aventuras. 'El Sol' representa éxito, claridad y felicidad, mientras que 'El Loco' indica una nueva fase llena de potencial, aunque con cierto riesgo. El consultante podría estar a punto de comenzar algo nuevo con resultados muy positivos."
+      },
+      {
+        "question": "¿Qué importancia tiene la posición invertida de una carta en una tirada de tarot?",
+        "type": "open",
+        "points": 5,
+        "guide": "Las cartas invertidas en el tarot suelen indicar bloqueos, retrasos o la manifestación negativa de las cualidades de la carta. También pueden señalar una introspección o una advertencia de que el consultante no está aprovechando las energías de la carta de manera efectiva."
+      },
+      {
+        "question": "Realiza una interpretación completa de la siguiente tirada de tarot: Carta 1: El Juicio, Carta 2: 8 de Copas, Carta 3: La Luna. Escenario: El consultante está buscando orientación sobre un posible cambio de carrera.",
+        "type": "open",
+        "points": 10,
+        "guide": "El Juicio sugiere que el consultante está en un punto de despertar o renovación, enfrentando una gran decisión. El 8 de Copas indica que debe dejar atrás algo que ya no le satisface, probablemente su situación actual en el trabajo. La Luna refleja incertidumbre y miedo a lo desconocido, pero también intuición. Esta tirada aconseja seguir su intuición y aceptar el cambio, a pesar de las dudas."
+      }
+    ]
+  },
+  {
+    "title": "Cuestionario para Filtrar Tarotistas - Cuestionario B",
+    "level": "intermedio",
+    "questions": [
+      {
+        "question": "¿Cuál es el Arcano Mayor que representa el equilibrio y la moderación?",
+        "choices": ["La Templanza", "La Justicia", "El Carro"],
+        "correct_answer": "La Templanza",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Qué carta del tarot se asocia comúnmente con el amor y las relaciones?",
+        "choices": ["El Ermitaño", "Los Enamorados", "La Torre"],
+        "correct_answer": "Los Enamorados",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Qué representa generalmente el '3 de Pentáculos' en una lectura?",
+        "choices": [
+          "Trabajo en equipo y colaboración",
+          "Pérdida y traición",
+          "Conflictos y peleas"
+        ],
+        "correct_answer": "Trabajo en equipo y colaboración",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Qué significa la carta de 'La Sacerdotisa'?",
+        "choices": [
+          "Acción y liderazgo",
+          "Sabiduría y conocimiento interno",
+          "Riqueza y éxito material"
+        ],
+        "correct_answer": "Sabiduría y conocimiento interno",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Cuál es la importancia del 'Caballo de Bastos' en una tirada?",
+        "choices": [
+          "Energía y movimiento",
+          "Estabilidad y seguridad",
+          "Confusión y caos"
+        ],
+        "correct_answer": "Energía y movimiento",
+        "points": 1,
+        "type": "multiple_choice"
+      },
+      {
+        "question": "¿Cómo interpretarías la combinación de 'La Torre' y 'El Mundo' en una tirada?",
+        "type": "open",
+        "points": 5,
+        "guide": "La Torre simboliza cambios repentinos y destrucción, mientras que El Mundo representa el cierre de un ciclo y la realización. Juntas, estas cartas sugieren un cambio drástico que, aunque puede ser disruptivo, lleva a una conclusión exitosa o a una nueva etapa de crecimiento."
+      },
+      {
+        "question": "Describe brevemente qué simboliza el '7 de Espadas' y cómo puede influir en una lectura.",
+        "type": "open",
+        "points": 5,
+        "guide": "El '7 de Espadas' suele simbolizar engaño, astucia o evasión. En una lectura, puede sugerir que alguien no está siendo honesto o que el consultante debe ser más estratégico en su enfoque para evitar un conflicto directo."
+      },
+      {
+        "question": "Si en una lectura aparecen juntas 'La Rueda de la Fortuna' y 'El Colgado', ¿qué interpretación podrías dar sobre la situación del consultante?",
+        "type": "open",
+        "points": 5,
+        "guide": "La Rueda de la Fortuna sugiere cambios inevitables, mientras que El Colgado representa una pausa o sacrificio. Juntas, indican que el consultante debe aceptar los cambios en su vida, aunque inicialmente puedan parecer una pérdida o sacrificio, ya que llevarán a una evolución más profunda."
+      },
+      {
+        "question": "¿Qué importancia tiene la posición de las cartas en el contexto de una tirada en cruz celta?",
+        "type": "open",
+        "points": 5,
+        "guide": "La posición de las cartas en la cruz celta es crucial, ya que cada posición tiene un significado específico que influye en la interpretación general. Por ejemplo, la primera carta representa la situación actual, mientras que la segunda muestra los obstáculos o desafíos. La combinación de todas las posiciones crea una narrativa detallada de la situación del consultante."
+      },
+      {
+        "question": "Realiza una interpretación completa de la siguiente tirada de tarot: Carta 1: El Emperador, Carta 2: 6 de Copas, Carta 3: Reina de Espadas. Escenario: El consultante está buscando orientación sobre su vida amorosa.",
+        "type": "open",
+        "points": 10,
+        "guide": "El Emperador indica una figura de autoridad o control en la vida del consultante, posiblemente representando su enfoque estructurado hacia las relaciones. El 6 de Copas sugiere nostalgia o una conexión con el pasado, mientras que la Reina de Espadas refleja un enfoque lógico y posiblemente distante hacia el amor. En conjunto, estas cartas podrían indicar que el consultante necesita equilibrar el control y la razón con el corazón y las emociones para avanzar en su vida amorosa."
+      }
+    ]
+  }
+]
