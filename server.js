@@ -73,6 +73,8 @@ class Server {
     io.use(WSAuth);
 
     io.on("connection", (socket) => {
+      console.log("connect " + socket.id);
+      console.log("connect " + socket.uid);
       if (socket.uid) socket.join(socket.uid);
     });
   }
