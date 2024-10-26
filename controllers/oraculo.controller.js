@@ -3,6 +3,7 @@ const { OpenAIClient } = require("../config");
 module.exports = {
   daily: async (req, res, next) => {
     try {
+      console.log(req.body.message);
       const params = {
         messages: [
           {
@@ -23,7 +24,6 @@ module.exports = {
       try {
         response = await OpenAIClient.chat.completions.create(params);
       } catch (error) {
-        console.error(error);
         response = null;
       }
 

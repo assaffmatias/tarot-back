@@ -31,7 +31,7 @@ class Server {
   }
 
   middlewares() {
-    this.app.use(cors());
+    this.app.use(cors({ origin: "*" }));
 
     this.app.use(express.json());
 
@@ -59,15 +59,15 @@ class Server {
     this.app.use(httpErrors);
   }
 
-  // emailReady() {
-  //   transporter.verify((err) => {
-  //     if (!err) {
-  //       console.log("La aplicación está lista para enviar emails".bgGreen);
-  //     } else {
-  //       console.log("Node-mailer - error de configuración".bgRed);
-  //     }
-  //   });
-  // }
+  emailReady() {
+    transporter.verify((err) => {
+      if (!err) {
+        console.log("La aplicación está lista para enviar emails".bgGreen);
+      } else {
+        console.log("Node-mailer - error de configuración".bgRed);
+      }
+    });
+  }
 
   setupSockets() {
     io.use(WSAuth);
