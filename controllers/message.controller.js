@@ -16,21 +16,17 @@ const messagePopulate = [
 module.exports = {
   sendMessage: async (req, res, next) => {
     try {
-      const { message } = req.body;
+      const { message, to, from } = req.body;
 
       // Obtén los archivos del request
       const audioFile = req.files?.audio;
       const imgFile = req.files?.img;
 
-      const [seller] = await Transaction.distinct("seller", {
-        _id: req.params.id,
-      });
-
       // Crea el nuevo mensaje
       const msg = new Message({
-        from: req.uid,
+        from,
         message,
-        to: seller,
+        to,
         transaction: req.params.id,
       });
 
@@ -67,7 +63,14 @@ module.exports = {
       const [populatedMessage] = await Message.populate([msg], messagePopulate);
 
       // Emitimos el mensaje a ambos usuarios
-      io.to([req.uid, seller]).emit("new_message", populatedMessage);
+      // io.to([req.uid, seller]).emit("new_message", populatedMessage);
+
+      // Se actualiza el hisotiral del chat
+      console.log(msg._id);
+      await Transaction.updateOne(
+        { _id: req.params.id },
+        { $push: { messages: msg._id } }
+      );
 
       // Retornamos el mensaje poblado como respuesta
       return res.send(populatedMessage);

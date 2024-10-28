@@ -1,3 +1,4 @@
+const { Transaction } = require("../models");
 const axios = require("axios");
 
 const PAYPAL_CLIENT =
@@ -70,7 +71,32 @@ module.exports = {
     }
   },
 
-  registerSuccesTransaction: async (req, res, nest) => {
-    console.log(req.body);
+  registerSuccesTransaction: async (req, res, next) => {
+    try {
+      const create = await Transaction.create(req.body);
+      create.save();
+
+      res.status(201);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  findClientTransactions: async (req, res, nest) => {
+    try {
+      const client = req.params.id;
+
+      const find = await Transaction.find({ client })
+        .populate("client")
+        .populate("seller")
+        .populate("service")
+        .populate("messages")
+        .lean()
+        .exec();
+
+      res.status(200).send(find);
+    } catch (error) {
+      next(error);
+    }
   },
 };

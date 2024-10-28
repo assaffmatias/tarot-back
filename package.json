@@ -1,6 +1,6 @@
 {
   "name": "tarot_arcano_back",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Aplicación de tarot - 2024",
   "main": "index.js",
   "type": "commonjs",
