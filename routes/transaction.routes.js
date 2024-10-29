@@ -6,6 +6,7 @@ const { check } = require("express-validator");
 const router = express.Router();
 
 router.get("/client/:id", [validateJWT], controller.findClientTransactions);
+router.get("/seller/:id", [validateJWT], controller.findSellerTransactions);
 router.post(
   "/",
   [

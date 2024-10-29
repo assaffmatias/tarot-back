@@ -99,4 +99,22 @@ module.exports = {
       next(error);
     }
   },
+
+  findSellerTransactions: async (req, res, next) => {
+    try {
+      const seller = req.params.id;
+
+      const find = await Transaction.find({ seller })
+        .populate("client")
+        .populate("seller")
+        .populate("service")
+        .populate("messages")
+        .lean()
+        .exec();
+
+      res.status(200).send(find);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
