@@ -82,7 +82,7 @@ module.exports = {
     }
   },
 
-  findClientTransactions: async (req, res, nest) => {
+  findClientTransactions: async (req, res, next) => {
     try {
       const client = req.params.id;
 
