@@ -70,12 +70,19 @@ class Server {
   }
 
   setupSockets() {
+    const userMap = new Map();
     io.use(WSAuth);
 
     io.on("connection", (socket) => {
-      console.log("connect " + socket.id);
-      console.log("connect " + socket.uid);
-      if (socket.uid) socket.join(socket.uid);
+      console.log(socket.id);
+
+      socket.on("addUsersActive", (data) => {
+        userMap.set(data.username, data.id);
+      });
+
+      socket.on("newMessage", (data) => {
+        socket.to(userMap.get(data.to)).emit("receiveMessage", data.message);
+      });
     });
   }
 

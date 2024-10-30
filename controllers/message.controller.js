@@ -73,6 +73,7 @@ module.exports = {
       );
 
       // Retornamos el mensaje poblado como respuesta
+
       return res.send(populatedMessage);
     } catch (error) {
       next(error);
