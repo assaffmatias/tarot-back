@@ -1,27 +1,14 @@
 const {Notification} = require('../models')
 module.exports = {
-    createForUser: async (user, message) => {
+    createNotification: async ({user,type,sender, message}) => {
       try {
-          const result = await Notification.create({user, message});
+          const result = await Notification.create({user,type,sender, message});
           //console.log("guardado en db",user,message,result,result._id);
           return result._id.toString();
       } catch (error) {
         console.error("Error al crear la notificación", error);
         throw error; // Re-throw the error to be handled by the caller
       }
-    },
-    createPendingMessage: async ({user, sender}) => {
-        const type = 1;
-        const message = `Notificacion de chat pendiente!`;
-        try{
-            const result = await Notification.create({user,sender,type, message});
-            return result._id.toString();
-        }catch (error) {
-          console.error("Error al crear la notificación", error);
-        throw error; // Re-throw the error to be handled by the caller
-        }
-
-        // Implementation for createPendingMessage
     },
     createForAll: async () => {
         // Implementation for createForAll

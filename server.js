@@ -108,9 +108,9 @@ class Server {
       socket.on("sendNotification", async (data) => {
         try{
           // console.log('message received',data);
-          const notificationId = await notificationController.createForUser(data.userId,data.message)
-          // console.log("socket id is: "+userMap.get(data.userId), data);
-          io.to(userMap.get(data.userId)).emit("addNotification", {id: notificationId , message:data.message});
+          const notificationId = await notificationController.createNotification({user:data.userId, type:0, message:data.message})
+          console.log("socket id is: "+userConnectedToApp.get(data.userId), data);
+          io.to(userConnectedToApp.get(data.userId)).emit("addNotification", {id: notificationId , message:data.message});
         }catch(error){
           console.error('Error al crear la notificación', error);
         }
@@ -123,8 +123,9 @@ class Server {
           socket.to(userMap.get(data.to)).emit("receiveMessage", data.message)
         else{
           console.log('El usuario no está conectado', data.to);
+          const message = `Tienes un chat pendiente con ${data.userName}`;
           //Anadir notificacion de mensaje pendiente en la base de datos
-          const notificationId = await notificationController.createPendingMessage({user:data.to, sender:data.userId})
+          const notificationId = await notificationController.createNotification({user:data.to, type:1,  sender:data.userId, message})
           //Anadir notificacion de mensaje pendiente en cliente
           io.to(userConnectedToApp.get(data.to)).emit("addNotification", {id: notificationId , message:"Tenes un chat pendiente", type:1});
         }

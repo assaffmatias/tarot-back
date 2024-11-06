@@ -24,10 +24,6 @@ const notificationSchema = new Schema(
       required: true,
       index: true
     },
-    readAt: {
-      type: Date,
-      default: null,
-    }
   },
   { versionKey: false, timestamps: true }
 );
