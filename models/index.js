@@ -9,4 +9,5 @@ module.exports = {
   Tag: require("./tag.model"),
   Transaction: require("./transaction.model"),
   User: require("./user.model"),
+  Notification: require("./notification.model"),
 };

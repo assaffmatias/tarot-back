@@ -9,4 +9,5 @@ module.exports = {
   transaction: require("./transaction.controller"),
   upload: require("./uploads.controller"),
   user: require("./user.controller"),
+  notification: require("./notification.controller"),
 };
