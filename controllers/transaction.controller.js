@@ -1,6 +1,6 @@
 const { Transaction } = require("../models");
 const axios = require("axios");
-const {notification : notificationController } = require("./index");
+const { createNotification } = require("./notification.controller");
 const {
   io,
   getSocketId_connected,
@@ -104,31 +104,31 @@ module.exports = {
   registerSuccesTransaction: async (req, res, next) => {
     try {
       const create = await Transaction.create(req.body);
-      // console.log(req.body)
+      console.log(req.body)
       create.save();
 
       const notificationId =
-      await notificationController.createNotification({
+      await createNotification({
         user: req.body.client,
         type: 0,
-        message: 'Tu pago se efectuó',
+        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
       });
 
       io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
         _id: notificationId,
-        message: 'Tu pago se efectuó',
+        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
       });
 
       const notificationSellerId =
-      await notificationController.createNotification({
+      await createNotification({
         user: req.body.seller,
         type: 0,
-        message: 'Contrataron tu servicio',
+        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
       });
 
       io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
         _id: notificationSellerId,
-        message: 'Contrataron tu servicio',
+        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
       });
 
 
