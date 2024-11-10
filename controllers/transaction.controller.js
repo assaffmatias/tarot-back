@@ -1,6 +1,7 @@
 const { Transaction, User, Payout } = require("../models");
 const axios = require("axios");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const { createNotification } = require("./notification.controller");
 const {
   io,
@@ -15,6 +16,7 @@ const {
 const PAYPAL_CLIENT = process.env.PAYPAL_CLIENT;
 const PAYPAL_SECRET = process.env.PAYPAL_SECRET;
 const PAYPAL_API = process.env.PAYPAL_API;
+
 module.exports = {
   getTransactions: async (req, res, next) => {
     req;
@@ -41,10 +43,9 @@ module.exports = {
 
       // Crear el pago con los datos proporcionados por el cliente
       const { amount, currency } = req.body;
-      
+
       // console.log('BODY:', req.body);
-      
-      
+
       const paymentData = {
         intent: "CAPTURE",
         purchase_units: [
@@ -171,7 +172,7 @@ module.exports = {
               sender_batch_id: `Payout_${token}`,
               email_subject: "Tienes un pago!",
               email_message:
-              "Recibiste un pago de tarot. Gracias por usar nuestro servicio.",
+                "Recibiste un pago de tarot. Gracias por usar nuestro servicio.",
             },
             items: [
               {
@@ -192,7 +193,7 @@ module.exports = {
         );
         console.log("Se envio el pago al seller y se guardo en db");
         // const responsePaymentTry = await axios.get(
-          //   response.data.links[0].href,
+        //   response.data.links[0].href,
         //   {
         //     headers: {
         //       Authorization: `Bearer ${auth.access_token}`,
@@ -201,37 +202,97 @@ module.exports = {
         // );
         // console.log("response of payout", responsePaymentTry.data);
 
-      const notificationId =
-      await createNotification({
-        user: req.body.client,
-        type: 0,
-        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
-      });
+        const notificationId = await createNotification({
+          user: req.body.client,
+          type: 0,
+          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
+        });
 
-      io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
-        _id: notificationId,
-        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
-      });
+        io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
+          _id: notificationId,
+          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
+        });
 
-      const notificationSellerId =
-      await createNotification({
-        user: req.body.seller,
-        type: 0,
-        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
-      });
+        const notificationSellerId = await createNotification({
+          user: req.body.seller,
+          type: 0,
+          message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
+        });
 
-      io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
-        _id: notificationSellerId,
-        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
-      });
+        io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
+          _id: notificationSellerId,
+          message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
+        });
 
-
-      return res.status(201);
-    }
+        return res.status(201);
+      }
     } catch (error) {
       console.log(error);
 
       next(error?.response?.data);
+    }
+  },
+
+  newTransactionCreditCard: async (req, res, next) => {
+    try {
+      const { amount, currency } = req.body;
+      // console.log(amount);
+
+      const session = await stripe.checkout.sessions.create({
+        line_items: [
+          {
+            // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+            price_data: {
+              product_data: { name: "Tarot", description: "Servicio de tarot" },
+              currency: currency,
+              unit_amount: amount * 100,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        // success_url: `${YOUR_DOMAIN}?success=true`,
+        // cancel_url: `${YOUR_DOMAIN}?canceled=true`,
+        success_url: `https://example.com/success/cc`,
+        cancel_url: `https://example.com/canceled/cc`,
+      });
+      // console.log(session);
+      const approvalUrl = session.url;
+      return res.json({ approvalUrl });
+    } catch (error) {
+      next(error);
+    }
+
+    // res.redirect(303, session.url);
+  },
+  registerSuccesTransactionCreditCard: async (req, res, next) => {
+    
+    try {
+      const transaction = await Transaction.create({...req.body,paypal_id:"credit_card"});
+      const notificationId = await createNotification({
+        user: req.body.client,
+        type: 0,
+        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
+      });
+      
+      io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
+        _id: notificationId,
+        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
+      });
+      
+      const notificationSellerId = await createNotification({
+        user: req.body.seller,
+        type: 0,
+        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
+      });
+      
+      io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
+        _id: notificationSellerId,
+        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
+      });
+      console.log('Pago registrado');
+    } catch (error) {
+      next(error);
     }
   },
 
