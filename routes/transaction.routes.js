@@ -16,7 +16,17 @@ router.post(
   ],
   controller.newTransaction
 );
+router.post(
+  "/cc",
+  [
+    validateJWT,
+    check("amount", "Debes enviar un valor").isString().notEmpty(),
+    check("currency", "Debe enviarse un valor valido").isIn(["USD"]).notEmpty(),
+  ],
+  controller.newTransactionCreditCard
+);
 
 router.post("/success", [validateJWT], controller.registerSuccesTransaction);
+router.post("/success/cc", [validateJWT], controller.registerSuccesTransactionCreditCard);
 
 module.exports = router;
