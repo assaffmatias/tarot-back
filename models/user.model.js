@@ -18,7 +18,8 @@ const userSchema = new Schema(
     state: { type: Boolean, default: true },
     google: { type: Boolean, default: false },
     password: { type: String, required: ["La contraseñá es obligatoria"] },
-    img: { type: String }, // No es obligatoria, mejor si no la generas
+    img: { type: String }, // No es obligatoria, mejor si no la generas,
+    paypal_email: { type: String },
   },
   { versionKey: false }
 );

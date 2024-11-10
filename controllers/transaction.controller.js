@@ -1,4 +1,4 @@
-const { Transaction, User } = require("../models");
+const { Transaction, User, Payout } = require("../models");
 const axios = require("axios");
 require("dotenv").config();
 
@@ -105,7 +105,9 @@ module.exports = {
           },
         }
       );
-      console.log("capture:", captureResponse);
+
+      //Guardo en la base en la transaccion
+      const transaction = await Transaction.create(req.body);
 
       //**Pago al tarot user
       //****Encuentro el email para pagar
@@ -114,49 +116,62 @@ module.exports = {
       const paymentValue = price * 0.85; // 85% del precio | 15% para el admin
       //****Realizo el pago
 
-      const response = await axios.post(
-        `${PAYPAL_API}/v1/payments/payouts`,
-        {
-          sender_batch_header: {
-            sender_batch_id: `Payout_${token}`,
-            email_subject: "Tienes un pago!",
-            email_message:
+      if (!tarotUser.paypal_email) {
+        //Si el seller no tiene paypal_email
+        const payout = await Payout.create({
+          user: tarotUser._id,
+          payed: false,
+          amount: paymentValue,
+          transaction: transaction._id,
+        });
+        console.log("El seller no tiene paypal_email, se cargo en db");
+        // return res.status(201).json({message: "El pago se ha realizado correctamente", transaction});
+        return res.status(201);
+      } else {
+        const payout = await Payout.create({
+          user: tarotUser._id,
+          payed: true,
+          amount: paymentValue,
+          transaction: transaction._id,
+        });
+        const response = await axios.post(
+          `${PAYPAL_API}/v1/payments/payouts`,
+          {
+            sender_batch_header: {
+              sender_batch_id: `Payout_${token}`,
+              email_subject: "Tienes un pago!",
+              email_message:
               "Recibiste un pago de tarot. Gracias por usar nuestro servicio.",
-          },
-          items: [
-            {
-              recipient_type: "EMAIL",
-              amount: { value: paymentValue, currency: "USD" },
-              note: "Gracias por usar nuestro servicio!",
-              sender_item_id: `Payout_${token}`,
-              receiver: "sb-cjlzf33918318@personal.example.com",
             },
-          ],
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.access_token}`,
+            items: [
+              {
+                recipient_type: "EMAIL",
+                amount: { value: paymentValue, currency: "USD" },
+                note: "Gracias por usar nuestro servicio!",
+                sender_item_id: `Payout_${token}`,
+                receiver: tarotUser.paypal_email,
+              },
+            ],
           },
-        }
-      );
-
-      console.log("linkardopolis",response.data.links[0].href);
-
-      const responsePaymentTry = await axios.get(
-        response.data.links[0].href,
-        {
-          headers: {
-            Authorization: `Bearer ${auth.access_token}`,
-          },
-        }
-      );
-      console.log("response of payout", responsePaymentTry.data);
-
-      const create = await Transaction.create(req.body);
-      create.save();
-
-      res.status(201);
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${auth.access_token}`,
+            },
+          }
+        );
+        console.log("Se envio el pago al seller y se guardo en db");
+        // const responsePaymentTry = await axios.get(
+          //   response.data.links[0].href,
+        //   {
+        //     headers: {
+        //       Authorization: `Bearer ${auth.access_token}`,
+        //     },
+        //   }
+        // );
+        // console.log("response of payout", responsePaymentTry.data);
+        return res.status(201);
+      }
     } catch (error) {
       console.log(error);
 
