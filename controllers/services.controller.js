@@ -91,17 +91,21 @@ module.exports = {
       next(error);
     }
   },
+  
   update: async (req, res, next) => {
     try {
-      const service = await Service.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-      });
-
-      return res.send({ msg: "Servicio actualizado", service });
+      const updatedService = await Service.findByIdAndUpdate(
+        req.params.id,
+        { price: req.body.price },
+        { new: true }
+      );
+  
+      return res.send({ msg: "Servicio actualizado", service: updatedService });
     } catch (error) {
       next(error);
     }
   },
+  
   delete: async (req, res, next) => {
     try {
       const service = await Service.findByIdAndUpdate(

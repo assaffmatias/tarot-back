@@ -7,9 +7,19 @@ const morgan = require("morgan");
 const routes = require("./routes");
 
 const { httpErrors, WSAuth } = require("./middlewares");
-const { httpServer, app, io } = require("./config");
+const {
+  httpServer,
+  app,
+  io,
+  getSocketId_connected,
+  setSocketId_connected,
+  removeSocketId_connected,
+  getSocketId_inChat,
+  setSocketId_inChat,
+  removeSocketId_inChat,
+} = require("./config");
 
-const {notification : notificationController } = require("./controllers");
+const { notification: notificationController } = require("./controllers");
 
 class Server {
   constructor() {
@@ -72,75 +82,87 @@ class Server {
   }
 
   setupSockets() {
-    const userConnectedToApp = new Map();
-    const userMap = new Map();
     io.use(WSAuth);
 
     io.on("connection", (socket) => {
-
-      
-      console.log(socket.id,"this is the socket", io.engine.clientsCount); //Count of connected clients
-
+      console.log(socket.id, "this is the socket", io.engine.clientsCount); //Count of connected clients
 
       socket.on("addUsersAppActive", (data) => {
-        console.log('Usuario entro a la app', data.userId);
+        console.log("Usuario entro a la app", data.userId);
 
-        
-        socket.join(data.role) //Join room based on role
-        userConnectedToApp.set(data.userId,data.id);
+        socket.join(data.role); //Join room based on role
+        setSocketId_connected(data.userId, data.id);
       });
 
       socket.on("addUsersActive", (data) => {
-        console.log('Usuario entro a un chat', data.userId);        
-        userMap.set(data.userId,data.id);
+        console.log("Usuario entro a un chat", data.userId);
+        setSocketId_inChat(data.userId, data.id);
       });
-      
+
       socket.on("deleteUsersActive", (data) => {
-
-        socket.leave(data.role) //Join room based on role
-        if(userMap.delete(data.userId))
-          console.log('Usuario salio del chat', data.userId);
-        
-
+        socket.leave(data.role); //Join room based on role
+        if (removeSocketId_inChat(data.userId))
+          console.log("Usuario salio del chat", data.userId);
       });
 
       //Only for testing
       socket.on("sendNotification", async (data) => {
-        try{
+        try {
           // console.log('message received',data);
-          const notificationId = await notificationController.createNotification({user:data.userId, type:0, message:data.message})
-          console.log("socket id is: "+userConnectedToApp.get(data.userId), data);
-          io.to(userConnectedToApp.get(data.userId)).emit("addNotification", {id: notificationId , message:data.message});
-        }catch(error){
-          console.error('Error al crear la notificación', error);
+          const notificationId =
+            await notificationController.createNotification({
+              user: data.userId,
+              type: 0,
+              message: data.message,
+            });
+          console.log(
+            "socket id is: " + getSocketId_connected(data.userId),
+            data
+          );
+          io.to(getSocketId_connected(data.userId)).emit("addNotification", {
+            _id: notificationId,
+            message: data.message,
+          });
+        } catch (error) {
+          console.error("Error al crear la notificación", error);
         }
       });
 
-      socket.on("newMessage", async (data)=>{
-        try{
-        console.log("llegomensajebro",userMap.has(data.to))
-        if(userMap.has(data.to))
-          socket.to(userMap.get(data.to)).emit("receiveMessage", data.message)
-        else{
-          console.log('El usuario no está conectado', data.to);
-          const message = `Tienes un chat pendiente con ${data.userName}`;
-          //Anadir notificacion de mensaje pendiente en la base de datos
-          const notificationId = await notificationController.createNotification({user:data.to, type:1,  sender:data.userId, message})
-          //Anadir notificacion de mensaje pendiente en cliente
-          io.to(userConnectedToApp.get(data.to)).emit("addNotification", {id: notificationId , message:"Tenes un chat pendiente", type:1});
+      socket.on("newMessage", async (data) => {
+        try {
+          console.log("llegomensajebro", getSocketId_inChat(data.to));
+          if (getSocketId_inChat(data.to))
+            socket
+              .to(getSocketId_inChat(data.to))
+              .emit("receiveMessage", data.message);
+          else {
+            console.log("El usuario no está conectado", data.to);
+            const message = `Tienes un chat pendiente con ${data.userName}`;
+            //Anadir notificacion de mensaje pendiente en la base de datos
+            const notificationId =
+              await notificationController.createNotification({
+                user: data.to,
+                type: 1,
+                sender: data.userId,
+                message,
+              });
+            //Anadir notificacion de mensaje pendiente en cliente
+            io.to(getSocketId_connected(data.to)).emit("addNotification", {
+              _id: notificationId,
+              message: "Tenes un chat pendiente",
+              type: 1,
+            });
+          }
+        } catch (error) {
+          console.error("Error al crear la notificación", error);
         }
-        }catch(error){
-          console.error('Error al crear la notificación', error);
-        }
-      })
-      
-      //Cambiar estado de la notificacion
-        socket.on("changePendingNotification", (data) => {
-        // console.log('change pending notification',data);
-        notificationController.changePendingNotification(data.id,data.value)
-      })
-      
+      });
 
+      //Cambiar estado de la notificacion
+      socket.on("changePendingNotification", (data) => {
+        // console.log('change pending notification',data);
+        notificationController.changePendingNotification(data.id, data.value);
+      });
     });
   }
 

@@ -1,6 +1,16 @@
 const { Transaction, User, Payout } = require("../models");
 const axios = require("axios");
 require("dotenv").config();
+const { createNotification } = require("./notification.controller");
+const {
+  io,
+  getSocketId_connected,
+  setSocketId_connected,
+  removeSocketId_connected,
+  getSocketId_inChat,
+  setSocketId_inChat,
+  removeSocketId_inChat,
+} = require("../config");
 
 const PAYPAL_CLIENT = process.env.PAYPAL_CLIENT;
 const PAYPAL_SECRET = process.env.PAYPAL_SECRET;
@@ -31,6 +41,10 @@ module.exports = {
 
       // Crear el pago con los datos proporcionados por el cliente
       const { amount, currency } = req.body;
+      
+      // console.log('BODY:', req.body);
+      
+      
       const paymentData = {
         intent: "CAPTURE",
         purchase_units: [
@@ -65,7 +79,23 @@ module.exports = {
       const approvalUrl = payment.links.find(
         (link) => link.rel === "approve"
       ).href;
-      console.log("payment is: ", payment);
+
+      // // Crear una notificación para el cliente
+      // const messageClient = `Tu transacción de ${amount} ${currency} está pendiente.`;
+      // const notificationClient = await notificationController.createNotification({
+      //   user: client,
+      //   type: 0, // Tipo de notificación (puedes modificar esto según el tipo de notificación que quieras)
+      //   message: messageClient,
+      // });
+
+      // // Crear una notificación para el vendedor
+      // const messageSeller = `El cliente ${client} ha realizado una compra de ${amount} ${currency}.`;
+      // const notificationSeller = await notificationController.createNotification({
+      //   user: seller,
+      //   type: 0, // Puedes usar otro tipo si es necesario
+      //   message: messageSeller,
+      // });
+
       // Responder con el approval_url para abrirlo en el frontend
       res.status(200).json({ approvalUrl });
     } catch (error) {
@@ -170,8 +200,34 @@ module.exports = {
         //   }
         // );
         // console.log("response of payout", responsePaymentTry.data);
-        return res.status(201);
-      }
+
+      const notificationId =
+      await createNotification({
+        user: req.body.client,
+        type: 0,
+        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
+      });
+
+      io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
+        _id: notificationId,
+        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
+      });
+
+      const notificationSellerId =
+      await createNotification({
+        user: req.body.seller,
+        type: 0,
+        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
+      });
+
+      io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
+        _id: notificationSellerId,
+        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
+      });
+
+
+      return res.status(201);
+    }
     } catch (error) {
       console.log(error);
 
