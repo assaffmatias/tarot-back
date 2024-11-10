@@ -1,12 +1,10 @@
-const { Transaction } = require("../models");
+const { Transaction, User } = require("../models");
 const axios = require("axios");
+require("dotenv").config();
 
-const PAYPAL_CLIENT =
-  "ASop4SvcdJt7V8LuLD_5xp_vZ5H-4d8nR1N13TIdXwbbUvvM6P7GucdbhXxYfZTye_LNGIQPfqBE-AVs";
-const PAYPAL_SECRET =
-  "EMqpoMPNmlAMaRjE9hhrmueMnQ_mmzlasg7HTnSLjATjiGe657p6JQ2VoLnqlkNTR2hVLYdTbh6v4fhe";
-const PAYPAL_API = "https://api-m.sandbox.paypal.com"; // Usa `api-m.paypal.com` en producción
-
+const PAYPAL_CLIENT = process.env.PAYPAL_CLIENT;
+const PAYPAL_SECRET = process.env.PAYPAL_SECRET;
+const PAYPAL_API = process.env.PAYPAL_API;
 module.exports = {
   getTransactions: async (req, res, next) => {
     req;
@@ -15,9 +13,11 @@ module.exports = {
   newTransaction: async (req, res, next) => {
     try {
       // Autenticación con PayPal para obtener el token de acceso
+      const params = new URLSearchParams();
+      params.append("grant_type", "client_credentials");
       const { data: auth } = await axios.post(
         `${PAYPAL_API}/v1/oauth2/token`,
-        "grant_type=client_credentials",
+        params,
         {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -60,25 +60,107 @@ module.exports = {
       );
 
       // Encontrar el approval_url en los enlaces de respuesta
+      console.log("paymentid", payment.id);
+
       const approvalUrl = payment.links.find(
         (link) => link.rel === "approve"
       ).href;
-
+      console.log("payment is: ", payment);
       // Responder con el approval_url para abrirlo en el frontend
       res.status(200).json({ approvalUrl });
     } catch (error) {
+      // console.error(error);
       next(error?.response?.data);
     }
   },
 
   registerSuccesTransaction: async (req, res, next) => {
     try {
+      const params = new URLSearchParams();
+      params.append("grant_type", "client_credentials");
+      const { data: auth } = await axios.post(
+        `${PAYPAL_API}/v1/oauth2/token`,
+        params,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          auth: {
+            username: PAYPAL_CLIENT,
+            password: PAYPAL_SECRET,
+          },
+        }
+      );
+      //Capturar orden
+      console.log(req.body);
+
+      const { paypal_id, token, seller, price } = req.body;
+      console.log("lo que llega", token);
+      const { data: captureResponse } = await axios.post(
+        `${PAYPAL_API}/v2/checkout/orders/${token}/capture`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${auth.access_token}`,
+          },
+        }
+      );
+      console.log("capture:", captureResponse);
+
+      //**Pago al tarot user
+      //****Encuentro el email para pagar
+      const tarotUser = await User.findOne({ _id: seller });
+      //****Calculo el pago
+      const paymentValue = price * 0.85; // 85% del precio | 15% para el admin
+      //****Realizo el pago
+
+      const response = await axios.post(
+        `${PAYPAL_API}/v1/payments/payouts`,
+        {
+          sender_batch_header: {
+            sender_batch_id: `Payout_${token}`,
+            email_subject: "Tienes un pago!",
+            email_message:
+              "Recibiste un pago de tarot. Gracias por usar nuestro servicio.",
+          },
+          items: [
+            {
+              recipient_type: "EMAIL",
+              amount: { value: paymentValue, currency: "USD" },
+              note: "Gracias por usar nuestro servicio!",
+              sender_item_id: `Payout_${token}`,
+              receiver: "sb-cjlzf33918318@personal.example.com",
+            },
+          ],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${auth.access_token}`,
+          },
+        }
+      );
+
+      console.log("linkardopolis",response.data.links[0].href);
+
+      const responsePaymentTry = await axios.get(
+        response.data.links[0].href,
+        {
+          headers: {
+            Authorization: `Bearer ${auth.access_token}`,
+          },
+        }
+      );
+      console.log("response of payout", responsePaymentTry.data);
+
       const create = await Transaction.create(req.body);
       create.save();
 
       res.status(201);
     } catch (error) {
-      next(error);
+      console.log(error);
+
+      next(error?.response?.data);
     }
   },
 
@@ -114,7 +196,7 @@ module.exports = {
 
       res.status(200).send(find);
     } catch (error) {
-      next(error);
+      next(error.message);
     }
   },
 };
