@@ -3,7 +3,6 @@ const { OpenAIClient } = require("../config");
 module.exports = {
   daily: async (req, res, next) => {
     try {
-      console.log(req.body.message);
       const params = {
         messages: [
           {
@@ -20,7 +19,6 @@ module.exports = {
       };
 
       let response;
-
       try {
         response = await OpenAIClient.chat.completions.create(params);
       } catch (error) {
@@ -29,10 +27,7 @@ module.exports = {
 
       return res.send({
         msg: "OK",
-        data: response,
-        response:
-          response?.choices[0].message.content ??
-          "No disponible, intente nuevamente mas adelante",
+        response: response?.choices[0].message.content ?? "No disponible, intente nuevamente más adelante",
       });
     } catch (error) {
       next(error);

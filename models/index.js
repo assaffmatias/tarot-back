@@ -1,5 +1,6 @@
 module.exports = {
   Answer: require("./answer.model"),
+  Card: require("./card.model"),
   Code: require("./code.model"),
   Message: require("./message.model"),
   Question: require("./question.model"),
