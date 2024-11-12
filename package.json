@@ -1,6 +1,6 @@
 {
   "name": "tarot_arcano_back",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Aplicación de tarot - 2024",
   "main": "index.js",
   "type": "commonjs",
@@ -12,6 +12,7 @@
   "author": "Miqueas Ledesma",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
     "colors": "^1.4.0",
     "cors": "^2.8.5",
@@ -28,6 +29,7 @@
     "nodemailer": "^6.9.14",
     "openai": "^4.57.1",
     "socket.io": "^4.7.5",
+    "stripe": "^17.3.1",
     "uuid": "^10.0.0"
   },
   "devDependencies": {

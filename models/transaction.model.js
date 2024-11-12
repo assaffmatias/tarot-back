@@ -22,6 +22,12 @@ const transactionSchema = new Schema(
       type: String,
       required: true,
     },
+    messages: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Message",
+      },
+    ],
   },
   { versionKey: false, timestamps: true }
 );

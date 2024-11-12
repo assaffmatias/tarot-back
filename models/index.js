@@ -1,5 +1,6 @@
 module.exports = {
   Answer: require("./answer.model"),
+  Card: require("./card.model"),
   Code: require("./code.model"),
   Message: require("./message.model"),
   Question: require("./question.model"),
@@ -9,4 +10,6 @@ module.exports = {
   Tag: require("./tag.model"),
   Transaction: require("./transaction.model"),
   User: require("./user.model"),
+  Notification: require("./notification.model"),
+  Payout: require("./payout.model"),
 };
