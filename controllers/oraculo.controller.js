@@ -3,13 +3,14 @@ const { OpenAIClient } = require("../config");
 module.exports = {
   daily: async (req, res, next) => {
     try {
-      const {lastMessages} = req.body
+      const { lastMessages, cartas } = req.body; // cartas:["El Mago", "Loco"] 
       const params = {
         messages: [
           {
             role: "system",
             content:
-              "Eres un asistente que solo responde preguntas relacionadas con el horóscopo. Si te hacen una pregunta no relacionada con el horóscopo, debes responder: 'Lo siento, solo puedo responder preguntas relacionadas con el horóscopo.'",
+              `Eres un asistente que solo responde preguntas relacionadas con el horóscopo. Si te hacen una pregunta no relacionada con el horóscopo, debes responder: 'Lo siento, solo puedo responder preguntas relacionadas con el horóscopo. Ademas, ten en cuenta en cada respuesta que generes que ya le han tirado las cartas al usuario y son las siguientes: [${cartas.join(', ')}].`
+              ,
           },
           // {
           //   role: "user",
@@ -18,7 +19,7 @@ module.exports = {
         ],
         model: "gpt-3.5-turbo",
       };
-
+      console.log(params.messages[0].content);
       if (Array.isArray(lastMessages) && lastMessages.length > 0) {
         params.messages = [...params.messages, ...lastMessages];
       }
@@ -31,13 +32,12 @@ module.exports = {
 
       return res.send({
         msg: "OK",
-        response: response?.choices[0].message.content ?? "No disponible, intente nuevamente más adelante",
+        response:
+          response?.choices[0].message.content ??
+          "No disponible, intente nuevamente más adelante",
       });
     } catch (error) {
       next(error);
     }
   },
 };
-
-
-
