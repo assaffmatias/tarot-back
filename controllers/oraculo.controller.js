@@ -9,7 +9,7 @@ module.exports = {
           {
             role: "system",
             content:
-              `Eres un asistente que solo responde preguntas relacionadas con el horóscopo. Si te hacen una pregunta no relacionada con el horóscopo, debes responder: 'Lo siento, solo puedo responder preguntas relacionadas con el horóscopo. Ademas, ten en cuenta en cada respuesta que generes que ya le han tirado las cartas al usuario y son las siguientes: [${cartas.join(', ')}].`
+              `Eres un asistente que solo responde preguntas relacionadas con el horóscopo. Si te hacen una pregunta no relacionada con el horóscopo, debes responder: 'Lo siento, solo puedo responder preguntas relacionadas con el horóscopo. Ademas, ten en cuenta en cada respuesta que generes que ya le han tirado las cartas al usuario y son las siguientes: ${cartas.join(', ')}, responde detalladamente que significa cada una.`
               ,
           },
           // {
