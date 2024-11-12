@@ -1,6 +1,6 @@
 # Ignorar dependencias de Node.js
 node_modules/
-google.json
+#google.json
 
 # Ignorar archivos de logs
 *.log
