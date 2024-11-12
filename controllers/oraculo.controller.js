@@ -3,6 +3,7 @@ const { OpenAIClient } = require("../config");
 module.exports = {
   daily: async (req, res, next) => {
     try {
+      const {lastMessages} = req.body
       const params = {
         messages: [
           {
@@ -10,14 +11,17 @@ module.exports = {
             content:
               "Eres un asistente que solo responde preguntas relacionadas con el horóscopo. Si te hacen una pregunta no relacionada con el horóscopo, debes responder: 'Lo siento, solo puedo responder preguntas relacionadas con el horóscopo.'",
           },
-          {
-            role: "user",
-            content: req.body.message || "¿Cuál es mi horóscopo de hoy?",
-          },
+          // {
+          //   role: "user",
+          //   content: req.body.message || "¿Cuál es mi horóscopo de hoy?",
+          // },
         ],
         model: "gpt-3.5-turbo",
       };
 
+      if (Array.isArray(lastMessages) && lastMessages.length > 0) {
+        params.messages = [...params.messages, ...lastMessages];
+      }
       let response;
       try {
         response = await OpenAIClient.chat.completions.create(params);
@@ -34,3 +38,6 @@ module.exports = {
     }
   },
 };
+
+
+
