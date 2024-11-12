@@ -5,6 +5,7 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const morgan = require("morgan");
 const routes = require("./routes");
+require("dotenv").config();
 
 const { httpErrors, WSAuth } = require("./middlewares");
 const {
@@ -20,6 +21,7 @@ const {
 } = require("./config");
 
 const { notification: notificationController } = require("./controllers");
+const seedAll = require("./seed");
 
 class Server {
   constructor() {
@@ -167,8 +169,13 @@ class Server {
   }
 
   listen() {
-    httpServer.listen(this.port, () =>
-      console.log(`Your server is running on ${this.port}`.rainbow)
+    httpServer.listen(this.port, () =>{
+      if(process.env.DB_ERASE === "true"){
+        seedAll();
+        console.log("Base de datos inicializada con datos de prueba".bgGreen);
+      }
+      return console.log(`Your server is running on ${this.port}`.rainbow)
+  }
     );
   }
 }

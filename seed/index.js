@@ -117,11 +117,13 @@ async function seedAll() {
     );
     console.log(`Se crearon ${new_transactions.length} transacciónes`.bgGreen);
 
-    process.exit(0);
+    // process.exit(0);
   } catch (error) {
     console.log(error);
-    process.exit(1);
+    // process.exit(1);
   }
 }
 
-seedAll();
+module.exports = seedAll;
+
+// seedAll();
