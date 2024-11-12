@@ -137,7 +137,7 @@ class Server {
               .emit("receiveMessage", data.message);
           else {
             console.log("El usuario no está conectado", data.to);
-            const message = `Tienes un chat pendiente con ${data.userName}`;
+            const message = `Tienes un chat pendiente`;
             //Anadir notificacion de mensaje pendiente en la base de datos
             const notificationId =
               await notificationController.createNotification({
