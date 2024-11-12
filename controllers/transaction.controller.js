@@ -16,6 +16,7 @@ const {
 const PAYPAL_CLIENT = process.env.PAYPAL_CLIENT;
 const PAYPAL_SECRET = process.env.PAYPAL_SECRET;
 const PAYPAL_API = process.env.PAYPAL_API;
+const COMISION = process.env.COMISION;
 
 module.exports = {
   getTransactions: async (req, res, next) => {
@@ -144,7 +145,7 @@ module.exports = {
       //****Encuentro el email para pagar
       const tarotUser = await User.findOne({ _id: seller });
       //****Calculo el pago
-      const paymentValue = price * 0.85; // 85% del precio | 15% para el admin
+      const paymentValue = price * (1-(COMISION/100));
       //****Realizo el pago
 
       if (!tarotUser.paypal_email) {
@@ -237,7 +238,9 @@ module.exports = {
     try {
       const { amount, currency } = req.body;
       // console.log(amount);
-
+      const paymentValue = amount * (1-(COMISION/100));
+      console.log(paymentValue,amount,COMISION);
+      
       const session = await stripe.checkout.sessions.create({
         line_items: [
           {
@@ -245,7 +248,7 @@ module.exports = {
             price_data: {
               product_data: { name: "Tarot", description: "Servicio de tarot" },
               currency: currency,
-              unit_amount: amount * 100,
+              unit_amount: paymentValue * 100,
             },
             quantity: 1,
           },
@@ -269,6 +272,17 @@ module.exports = {
     
     try {
       const transaction = await Transaction.create({...req.body,paypal_id:"credit_card"});
+      const { seller, price } = req.body;
+      const tarotUser = await User.findOne({ _id: seller });
+      
+      const paymentValue = price * (1-(COMISION/100));
+      const payout = await Payout.create({
+        user: tarotUser._id,
+        payed: false,
+        amount: paymentValue,
+        transaction: transaction._id,
+      });
+      console.log("El seller no tiene paypal_email, se cargo en db");
       const notificationId = await createNotification({
         user: req.body.client,
         type: 0,
