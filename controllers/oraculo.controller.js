@@ -19,7 +19,6 @@ module.exports = {
         ],
         model: "gpt-3.5-turbo",
       };
-      console.log(params.messages[0].content);
       if (Array.isArray(lastMessages) && lastMessages.length > 0) {
         params.messages = [...params.messages, ...lastMessages];
       }
