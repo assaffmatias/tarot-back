@@ -15,11 +15,12 @@ const userSchema = new Schema(
       unique: [true, "El email ya esta registrado en la DB"],
     },
     about: { type: String },
-    state: { type: Boolean, default: true },
+    state: { type: Boolean, default: true }, //Baja logica
     google: { type: Boolean, default: false },
     password: { type: String, required: ["La contraseñá es obligatoria"] },
     img: { type: String }, // No es obligatoria, mejor si no la generas,
-    paypal_email: { type: String },
+    paypal_email: { type: String }, //Para pagarle al user
+    chatCoins: { type: Number, default: 0 }, // Para monetizar el chatIA
   },
   { versionKey: false }
 );
