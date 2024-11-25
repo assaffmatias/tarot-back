@@ -27,6 +27,8 @@ module.exports = {
 
   newTransaction: async (req, res, next) => {
     try {
+      // console.log(req.body);
+      
       // Autenticación con PayPal para obtener el token de acceso
       const params = new URLSearchParams();
       params.append("grant_type", "client_credentials");
@@ -45,7 +47,7 @@ module.exports = {
       );
 
       // Crear el pago con los datos proporcionados por el cliente
-      const { amount, currency, hiredMinutes } = req.body;
+      const { amount, currency, client, seller, service, quantity, type } = req.body;
 
       // console.log('BODY:', req.body);
 
@@ -53,7 +55,7 @@ module.exports = {
         intent: "CAPTURE",
         purchase_units: [
           {
-            items: [{name:"Minutes", quantity:hiredMinutes, unit_amount: { currency_code: currency, value: amount/hiredMinutes }}],
+            items: [{name:type, quantity, unit_amount: { currency_code: currency, value: amount/quantity }}],
             amount: {
               breakdown:{item_total: { currency_code: currency, value: amount }},
               currency_code: currency,
@@ -103,7 +105,9 @@ module.exports = {
       // });
 
       // Responder con el approval_url para abrirlo en el frontend
-      res.status(200).json({ approvalUrl });
+      console.log(approvalUrl);
+      
+      return res.status(200).json({ approvalUrl });
     } catch (error) {
       // console.error(error);
       next(error?.response?.data);
@@ -119,6 +123,8 @@ module.exports = {
     //   token: '44D94727XF080974X',
     //   paypal_id: 'Z5Q4LRQFVELFG'
     // }
+    console.log(req.body);
+    
     try {
       const params = new URLSearchParams();
       params.append("grant_type", "client_credentials");
@@ -136,8 +142,6 @@ module.exports = {
         }
       );
       //Capturar orden
-      console.log(req.body);
-
       const { paypal_id, token, seller, price } = req.body;
       console.log("lo que llega", token);
       const { data: captureResponse } = await axios.post(
@@ -157,69 +161,131 @@ module.exports = {
           Authorization: `Bearer ${auth.access_token}`,
         },
       }
-    )
-    //Nueva transaccion con precio y la fecha de fin del chat
-      req.body.price = purchaseData.purchase_units[0].items[0].unit_amount.value;
-      const hiredUntil = new Date();
-      const hiredMinutes = purchaseData.purchase_units[0].items[0].quantity;
-      hiredUntil.setMinutes(hiredUntil.getMinutes() + parseInt(hiredMinutes));
-      req.body.hiredUntil = hiredUntil;
+      )
+     console.log("purchase data:",purchaseData.purchase_units[0]);
 
+      const paymentObj = {
+        type : purchaseData.purchase_units[0].items[0].name, 
+        price : purchaseData.purchase_units[0].amount.value, 
+        quantity : purchaseData.purchase_units[0].items[0].quantity
+       }
+      paymentObj.status = "payed";
+      paymentObj.paymentMethod = "paypal";
+      paymentObj.paymentId = token;
+      //Creo el pago exitoso
+      if(paymentObj.type === "hire") {
+        const hiredUntil = new Date();
+        const hiredMinutes = paymentObj.quantity;
+        hiredUntil.setMinutes(hiredUntil.getMinutes() + parseInt(hiredMinutes));
+        paymentObj.hiredUntil = hiredUntil;
+      }else if(paymentObj.type === "coins") {
+        const coins =  paymentObj.quantity;
+        const user = await User.findById(req.body.client).exec();
+        console.log(user);
+        user.chatCoins += parseInt(coins);
+        await user.save();
+      }
+      const payment = await Payment.create(paymentObj);
+      //Nueva transaccion con precio
+      req.body.price = paymentObj.price
       //Guardo en la base en la transaccion
-      const transaction = await Transaction.create(req.body);
+      console.log(req.body);
+      
+      const transaction = await Transaction.create({...req.body, payment: payment._id });
 
-      //**Pago al tarot user
-      //****Encuentro el email para pagar
-      const tarotUser = await User.findOne({ _id: seller });
-      //****Calculo el pago
-      const paymentValue = price * (1-(COMISION/100));
-      //****Realizo el pago
 
-      if (!tarotUser.paypal_email) {
-        //Si el seller no tiene paypal_email
-        const payout = await Payout.create({
-          user: tarotUser._id,
-          payed: false,
-          amount: paymentValue,
-          transaction: transaction._id,
+      if(payment.type === "hire") {
+        //Notificacion al cliente
+        const notificationId = await createNotification({
+          user: transaction.client,
+          type: 0,
+          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
         });
-        console.log("El seller no tiene paypal_email, se cargo en db");
-        // return res.status(201).json({message: "El pago se ha realizado correctamente", transaction});
-        return res.status(201);
-      } else {
-        const payout = await Payout.create({
-          user: tarotUser._id,
-          payed: true,
-          amount: paymentValue,
-          transaction: transaction._id,
+        io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
+          _id: notificationId,
+          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
         });
-        const response = await axios.post(
-          `${PAYPAL_API}/v1/payments/payouts`,
-          {
-            sender_batch_header: {
-              sender_batch_id: `Payout_${token}`,
-              email_subject: "Tienes un pago!",
-              email_message:
-                "Recibiste un pago de tarot. Gracias por usar nuestro servicio.",
-            },
-            items: [
-              {
-                recipient_type: "EMAIL",
-                amount: { value: paymentValue, currency: "USD" },
-                note: "Gracias por usar nuestro servicio!",
-                sender_item_id: `Payout_${token}`,
-                receiver: tarotUser.paypal_email,
+        
+        //Notificacion al vendedor
+        const notificationSellerId = await createNotification({
+          user: transaction.seller,
+          type: 0,
+          message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+        });
+        
+        io.to(getSocketId_connected(transaction.seller.valueOf())).emit("addNotification", {
+          _id: notificationSellerId,
+          message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+          type: 0
+        });
+      }else if(payment.type === "coins") {
+        const notificationId = await createNotification({
+          user: transaction.client,
+          type: 1,
+          message: `Tu pago fué exitoso, tienes mas monedas en tu perfil!`,
+        });
+        io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
+          _id: notificationId,
+          message: `Tu pago fué exitoso, tienes mas monedas en tu perfil!`,
+          type: 1,
+        });
+      } 
+      console.log("el type es:",payment.type);
+      if(payment.type === "hire") {
+        //**Pago al tarot user
+        //****Encuentro el email para pagar
+        const tarotUser = await User.findOne({ _id: seller });
+        //****Calculo el pago
+        const paymentValue = price * (1-(COMISION/100));
+        //****Realizo el pago
+        
+        if (!tarotUser.paypal_email) {
+          //Si el seller no tiene paypal_email
+          const payout = await Payout.create({
+            user: tarotUser._id,
+            payed: false,
+            amount: paymentValue,
+            transaction: transaction._id,
+          });
+          console.log("El seller no tiene paypal_email, se cargo en db");
+          // return res.status(201).json({message: "El pago se ha realizado correctamente", transaction});
+          return res.status(201);
+        } else {
+          const payout = await Payout.create({
+            user: tarotUser._id,
+            payed: true,
+            amount: paymentValue,
+            transaction: transaction._id,
+          });
+          const response = await axios.post(
+            `${PAYPAL_API}/v1/payments/payouts`,
+            {
+              sender_batch_header: {
+                sender_batch_id: `Payout_${token}`,
+                email_subject: "Tienes un pago!",
+                email_message:
+                  "Recibiste un pago de tarot. Gracias por usar nuestro servicio.",
               },
-            ],
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${auth.access_token}`,
+              items: [
+                {
+                  recipient_type: "EMAIL",
+                  amount: { value: paymentValue, currency: "USD" },
+                  note: "Gracias por usar nuestro servicio!",
+                  sender_item_id: `Payout_${token}`,
+                  receiver: tarotUser.paypal_email,
+                },
+              ],
             },
-          }
-        );
-        console.log("Se envio el pago al seller y se guardo en db");
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${auth.access_token}`,
+              },
+            }
+          );
+          console.log("Se envio el pago al seller y se guardo en db");
+        }
+      }
         // const responsePaymentTry = await axios.get(
         //   response.data.links[0].href,
         //   {
@@ -230,31 +296,47 @@ module.exports = {
         // );
         // console.log("response of payout", responsePaymentTry.data);
 
-        const notificationId = await createNotification({
-          user: req.body.client,
-          type: 0,
-          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
-        });
+        if(payment.type === "hire") {
+          //Notificacion al cliente
+          const notificationId = await createNotification({
+            user: transaction.client,
+            type: 0,
+            message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+          });
+          io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
+            _id: notificationId,
+            message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+          });
+          
+          //Notificacion al vendedor
+          const notificationSellerId = await createNotification({
+            user: transaction.seller,
+            type: 0,
+            message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+          });
+          
+          io.to(getSocketId_connected(transaction.seller.valueOf())).emit("addNotification", {
+            _id: notificationSellerId,
+            message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+            type: 0
+          });
+        }else if(payment.type === "coins") {
+          console.log('creating notiff brooo');
+          
+          const notificationId = await createNotification({
+            user: transaction.client,
+            type: 1,
+            message: `Tu pago fué exitoso, tienes mas monedas en tu perfil!`,
+          });
+          io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
+            _id: notificationId,
+            message: `Tu pago fué exitoso, tienes mas monedas en tu perfil!`,
+            type: 1,
+          });
+        } 
+        return res.status(201).send({ message: "El pago se ha realizado correctamente", transaction });
 
-        io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
-          _id: notificationId,
-          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
-        });
-
-        const notificationSellerId = await createNotification({
-          user: req.body.seller,
-          type: 0,
-          message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
-        });
-
-        io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
-          _id: notificationSellerId,
-          message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
-        });
-
-        return res.status(201);
-      }
-    } catch (error) {
+    }catch (error) {
       console.log(error);
 
       next(error?.response?.data);
@@ -294,7 +376,7 @@ module.exports = {
       
       const payment = await Payment.create({price:amount, quantity, type, paymentMethod: "credit_card", paymentId:session.id });
       
-      const transactionObj = {client,seller,price:amount,payment:payment._id, status:"pending", service:service};
+      const transactionObj = {client,seller,price:amount,payment:payment._id, service:service};
       const transaction = await Transaction.create(transactionObj);
       const approvalUrl = session.url;
       console.log(approvalUrl);
@@ -305,48 +387,6 @@ module.exports = {
     }
 
     // res.redirect(303, session.url);
-  },
-  registerSuccesTransactionCreditCard: async (req, res, next) => {
-    
-    try {
-      console.log('body:', req.body);
-      const transaction = await Transaction.create({...req.body,paypal_id:"credit_card"});
-      const { seller, price } = req.body;
-      const tarotUser = await User.findOne({ _id: seller });
-      
-      const paymentValue = price * (1-(COMISION/100));
-      const payout = await Payout.create({
-        user: tarotUser._id,
-        payed: false,
-        amount: paymentValue,
-        transaction: transaction._id,
-      });
-      console.log("El seller no tiene paypal_email, se cargo en db");
-      // const notificationId = await createNotification({
-      //   user: req.body.client,
-      //   type: 0,
-      //   message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
-      // });
-      
-      // io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
-      //   _id: notificationId,
-      //   message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
-      // });
-      
-      // const notificationSellerId = await createNotification({
-      //   user: req.body.seller,
-      //   type: 0,
-      //   message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
-      // });
-      
-      // io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
-      //   _id: notificationSellerId,
-      //   message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
-      // });
-      console.log('Pago registrado');
-    } catch (error) {
-      next(error);
-    }
   },
 
   findClientTransactions: async (req, res, next) => {
