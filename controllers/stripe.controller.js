@@ -9,6 +9,7 @@ const {
   getSocketId_connected,
 } = require("../config/socket.js");
 
+const COMISION = process.env.COMISION;
 
 async function fulfillCheckout(sessionId) {
   // Set your secret key. Remember to switch to your live secret key in production.
@@ -50,6 +51,16 @@ async function fulfillCheckout(sessionId) {
     await user.save();
   }
   
+  //Guardo en db que se debe pagar al tarot user
+  const paymentValue = price * (1-(COMISION/100));
+  const payout = await Payout.create({
+    user: transaction.seller,
+    payed: false,
+    amount: paymentValue,
+    transaction: transaction._id,
+  });
+
+
  
   //Notificacion handler
   if(payment.type === "hire") {
