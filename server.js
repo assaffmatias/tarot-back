@@ -47,7 +47,13 @@ class Server {
   middlewares() {
     this.app.use(cors({ origin: "*" }));
 
-    this.app.use(express.json());
+    this.app.use((req, res, next) => {
+      if (req.originalUrl === "/api/stripe-webhook") 
+          next();
+       else 
+          express.json()(req, res, next);
+      
+  });
 
     this.app.use(
       fileUpload({
