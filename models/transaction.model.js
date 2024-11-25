@@ -18,9 +18,10 @@ const transactionSchema = new Schema(
       ref: "Service",
       required: [true, "El servicio es obligatorio"],
     },
-    paypal_id: {
-      type: String,
-      required: true,
+    payment:{
+      type: Schema.Types.ObjectId,
+      ref: "Payment",
+      required: [true, "El pago es obligatorio"],
     },
     messages: [
       {
