@@ -1,4 +1,4 @@
-const { Transaction, User, Payout } = require("../models");
+const { Transaction, User, Payout, Payment } = require("../models");
 const axios = require("axios");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
@@ -20,6 +20,8 @@ const COMISION = process.env.COMISION;
 
 module.exports = {
   getTransactions: async (req, res, next) => {
+    console.log('gsgsgs');
+    
     req;
   },
 
@@ -43,7 +45,7 @@ module.exports = {
       );
 
       // Crear el pago con los datos proporcionados por el cliente
-      const { amount, currency } = req.body;
+      const { amount, currency, hiredMinutes } = req.body;
 
       // console.log('BODY:', req.body);
 
@@ -51,7 +53,9 @@ module.exports = {
         intent: "CAPTURE",
         purchase_units: [
           {
+            items: [{name:"Minutes", quantity:hiredMinutes, unit_amount: { currency_code: currency, value: amount/hiredMinutes }}],
             amount: {
+              breakdown:{item_total: { currency_code: currency, value: amount }},
               currency_code: currency,
               value: amount,
             },
@@ -107,6 +111,14 @@ module.exports = {
   },
 
   registerSuccesTransaction: async (req, res, next) => {
+    // req.body = {
+    //   client: '6733c336c1d06872252e844c',
+    //   seller: '6733c336c1d06872252e844b',
+    //   price: '375.00',
+    //   service: '6733c336c1d06872252e8451',
+    //   token: '44D94727XF080974X',
+    //   paypal_id: 'Z5Q4LRQFVELFG'
+    // }
     try {
       const params = new URLSearchParams();
       params.append("grant_type", "client_credentials");
@@ -137,6 +149,21 @@ module.exports = {
           },
         }
       );
+
+      const {data: purchaseData} = await axios.get(
+      captureResponse.links.find((link) => link.rel === "self").href,
+      {
+        headers: {
+          Authorization: `Bearer ${auth.access_token}`,
+        },
+      }
+    )
+    //Nueva transaccion con precio y la fecha de fin del chat
+      req.body.price = purchaseData.purchase_units[0].items[0].unit_amount.value;
+      const hiredUntil = new Date();
+      const hiredMinutes = purchaseData.purchase_units[0].items[0].quantity;
+      hiredUntil.setMinutes(hiredUntil.getMinutes() + parseInt(hiredMinutes));
+      req.body.hiredUntil = hiredUntil;
 
       //Guardo en la base en la transaccion
       const transaction = await Transaction.create(req.body);
@@ -236,7 +263,14 @@ module.exports = {
 
   newTransactionCreditCard: async (req, res, next) => {
     try {
-      const { amount, currency } = req.body;
+      // client: 
+      // seller: 
+      // price: 
+      // service:
+      // payment:
+      
+      const { amount, currency, hiredMinutes, client, seller, service } = req.body;
+      
       // console.log(amount);
       const paymentValue = amount * (1-(COMISION/100));
       console.log(paymentValue,amount,COMISION);
@@ -246,11 +280,11 @@ module.exports = {
           {
             // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
             price_data: {
-              product_data: { name: "Tarot", description: "Servicio de tarot" },
+              product_data: { name: "Tarot", description: "Servicio de tarot", metadata:{type:"Minutes"} },
               currency: currency,
-              unit_amount: paymentValue * 100,
+              unit_amount: amount * 100,
             },
-            quantity: 1,
+            quantity: hiredMinutes,
           },
         ],
         mode: "payment",
@@ -259,7 +293,13 @@ module.exports = {
         success_url: `https://example.com/success/cc`,
         cancel_url: `https://example.com/canceled/cc`,
       });
-      // console.log(session);
+      
+      const payment = await Payment.create({price:amount, hiredMinutes, paymentMethod: "credit_card", paymentId:session.id });
+      console.log(payment);
+      
+      const transactionObj = {client,seller,price:amount,payment:payment._id, status:"pending", service:service};
+      const transaction = await Transaction.create(transactionObj);
+      console.log('session',session);
       const approvalUrl = session.url;
       return res.json({ approvalUrl });
     } catch (error) {
@@ -271,6 +311,7 @@ module.exports = {
   registerSuccesTransactionCreditCard: async (req, res, next) => {
     
     try {
+      console.log('body:', req.body);
       const transaction = await Transaction.create({...req.body,paypal_id:"credit_card"});
       const { seller, price } = req.body;
       const tarotUser = await User.findOne({ _id: seller });
@@ -283,27 +324,27 @@ module.exports = {
         transaction: transaction._id,
       });
       console.log("El seller no tiene paypal_email, se cargo en db");
-      const notificationId = await createNotification({
-        user: req.body.client,
-        type: 0,
-        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
-      });
+      // const notificationId = await createNotification({
+      //   user: req.body.client,
+      //   type: 0,
+      //   message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
+      // });
       
-      io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
-        _id: notificationId,
-        message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
-      });
+      // io.to(getSocketId_connected(req.body.client)).emit("addNotification", {
+      //   _id: notificationId,
+      //   message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${req.body.seller_name}`,
+      // });
       
-      const notificationSellerId = await createNotification({
-        user: req.body.seller,
-        type: 0,
-        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
-      });
+      // const notificationSellerId = await createNotification({
+      //   user: req.body.seller,
+      //   type: 0,
+      //   message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
+      // });
       
-      io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
-        _id: notificationSellerId,
-        message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
-      });
+      // io.to(getSocketId_connected(req.body.seller)).emit("addNotification", {
+      //   _id: notificationSellerId,
+      //   message: `${req.body.client_name} contrató tus servicios, envíale un mensaje`,
+      // });
       console.log('Pago registrado');
     } catch (error) {
       next(error);
@@ -314,13 +355,25 @@ module.exports = {
     try {
       const client = req.params.id;
 
-      const find = await Transaction.find({ client })
+      const transactions = await Transaction.find({ client })
         .populate("client")
         .populate("seller")
         .populate("service")
         .populate("messages")
+        .populate("payment")
         .lean()
         .exec();
+
+        if(transactions.length === 0)
+          return res.status(202).send(transactions);
+
+        const now = new Date();
+        console.log(transactions);
+        
+        const find = transactions.filter((transaction) => {
+          console.log(transaction);
+          return transaction.payment.status === "payed" && transaction.payment.hiredUntil > now});
+        console.log(find);
 
       res.status(200).send(find);
     } catch (error) {

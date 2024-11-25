@@ -3,6 +3,11 @@ const axios = require("axios");
 require("dotenv").config();
 const STRIPE_WHSEC = process.env.STRIPE_WHSEC;
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
+const { createNotification } = require("./notification.controller");
+const {
+  io,
+  getSocketId_connected,
+} = require("../config/socket.js");
 
 
 async function fulfillCheckout(sessionId) {
@@ -34,9 +39,35 @@ async function fulfillCheckout(sessionId) {
   await payment.save();
   console.log(`Payment with paymentId ${sessionId} fullfiled!`);
   
-  console.log("hola!");
+  // console.log("hola!");
   const transaction = await Transaction.findOne({payment:payment._id}).exec();
   console.log("hola!",transaction);
+
+ 
+  //Notificacion al cliente
+  const notificationId = await createNotification({
+    user: transaction.client,
+    type: 0,
+    message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+  });
+  io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
+    _id: notificationId,
+    message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+  });
+  
+  //Notificacion al vendedor
+  const notificationSellerId = await createNotification({
+    user: transaction.seller,
+    type: 0,
+    message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+  });
+  
+  io.to(getSocketId_connected(transaction.seller.valueOf())).emit("addNotification", {
+    _id: notificationSellerId,
+    message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+  });
+
+
   //Pago al tarotista
   // const paymentValue = price * (1-(COMISION/100));
   //     const payout = await Payout.create({
