@@ -11,4 +11,5 @@ module.exports = {
   upload: require("./uploads.controller"),
   user: require("./user.controller"),
   notification: require("./notification.controller"),
+  stripeWebhook: require("./stripe.controller"),
 };
