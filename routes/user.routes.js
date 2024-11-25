@@ -26,4 +26,8 @@ router.put(
   controller.update
 );
 
+// router.get("/:id", [validateJWT], controller.getUserData);
+router.get("/:id", controller.getUserData);
+
+
 module.exports = router;
