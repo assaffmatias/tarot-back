@@ -12,4 +12,5 @@ module.exports = {
   User: require("./user.model"),
   Notification: require("./notification.model"),
   Payout: require("./payout.model"),
+  Payment: require("./payment.model"),
 };
