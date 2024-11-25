@@ -3,9 +3,13 @@ const { Schema, model } = require("mongoose");
 const paymentSchema = new Schema(
   {
     price: { type: Number, required: [true, "El precio es obligatorio"] },
-    hiredMinutes: {
+    quantity: {
       type: Number,
-      required: [true, "El tiempo del servicio es obligatorio"],
+      required: [true, "La cantidad del servicio es obligatorio"],
+    },
+    type: {
+      type: String,
+      required: [true, "El tipo es obligatorio"],
     },
     hiredUntil: {
       type: Schema.Types.Date,

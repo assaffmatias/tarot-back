@@ -269,9 +269,7 @@ module.exports = {
       // service:
       // payment:
       
-      const { amount, currency, hiredMinutes, client, seller, service } = req.body;
-      
-      // console.log(amount);
+      const { amount, currency, quantity, type, client, seller, service } = req.body;
       const paymentValue = amount * (1-(COMISION/100));
       console.log(paymentValue,amount,COMISION);
       
@@ -280,11 +278,11 @@ module.exports = {
           {
             // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
             price_data: {
-              product_data: { name: "Tarot", description: "Servicio de tarot", metadata:{type:"Minutes"} },
+              product_data: { name: "Tarot", description: "Servicio de tarot", metadata:{type} },
               currency: currency,
               unit_amount: amount * 100,
             },
-            quantity: hiredMinutes,
+            quantity,
           },
         ],
         mode: "payment",
@@ -294,13 +292,13 @@ module.exports = {
         cancel_url: `https://example.com/canceled/cc`,
       });
       
-      const payment = await Payment.create({price:amount, hiredMinutes, paymentMethod: "credit_card", paymentId:session.id });
-      console.log(payment);
+      const payment = await Payment.create({price:amount, quantity, type, paymentMethod: "credit_card", paymentId:session.id });
       
       const transactionObj = {client,seller,price:amount,payment:payment._id, status:"pending", service:service};
       const transaction = await Transaction.create(transactionObj);
-      console.log('session',session);
       const approvalUrl = session.url;
+      console.log(approvalUrl);
+      
       return res.json({ approvalUrl });
     } catch (error) {
       next(error);

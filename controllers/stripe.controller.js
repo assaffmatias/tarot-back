@@ -29,43 +29,66 @@ async function fulfillCheckout(sessionId) {
     return res.status(403).send(`Payment not found.`);
   
   payment.status = "payed";
-  
-  const hiredMinutes =  payment.hiredMinutes;
-  const hiredUntil = new Date();
-  hiredUntil.setSeconds(hiredUntil.getSeconds() + 15); //Add 15 seconds because of processing time.
-  hiredUntil.setMinutes(hiredUntil.getMinutes() + parseInt(hiredMinutes));
-  payment.hiredUntil = hiredUntil;
-  
-  await payment.save();
-  console.log(`Payment with paymentId ${sessionId} fullfiled!`);
-  
-  // console.log("hola!");
   const transaction = await Transaction.findOne({payment:payment._id}).exec();
-  console.log("hola!",transaction);
+  let message="mensaje default";
+  if(payment.type === "hire") {
+    //hired minutes
+    const hiredMinutes =  payment.quantity;
+    const hiredUntil = new Date();
+    hiredUntil.setSeconds(hiredUntil.getSeconds() + 15); //Add 15 seconds because of processing time.
+    hiredUntil.setMinutes(hiredUntil.getMinutes() + parseInt(hiredMinutes));
+    payment.hiredUntil = hiredUntil;
+    await payment.save();
 
+  }else if(payment.type === "coins") {
+    //add coins
+    const coins =  payment.quantity;
+    const user = await User.findById(transaction.client).exec();
+    console.log(user);
+    
+    user.chatCoins += coins;
+    await user.save();
+  }
+  
  
-  //Notificacion al cliente
-  const notificationId = await createNotification({
-    user: transaction.client,
-    type: 0,
-    message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
-  });
-  io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
-    _id: notificationId,
-    message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
-  });
-  
-  //Notificacion al vendedor
-  const notificationSellerId = await createNotification({
-    user: transaction.seller,
-    type: 0,
-    message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
-  });
-  
-  io.to(getSocketId_connected(transaction.seller.valueOf())).emit("addNotification", {
-    _id: notificationSellerId,
-    message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
-  });
+  //Notificacion handler
+  if(payment.type === "hire") {
+    //Notificacion al cliente
+    const notificationId = await createNotification({
+      user: transaction.client,
+      type: 0,
+      message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+    });
+    io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
+      _id: notificationId,
+      message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+    });
+    
+    //Notificacion al vendedor
+    const notificationSellerId = await createNotification({
+      user: transaction.seller,
+      type: 0,
+      message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+    });
+    
+    io.to(getSocketId_connected(transaction.seller.valueOf())).emit("addNotification", {
+      _id: notificationSellerId,
+      message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+      type: 0
+    });
+  }else if(payment.type === "coins") {
+    const notificationId = await createNotification({
+      user: transaction.client,
+      type: 1,
+      message: `Tu pago fué exitoso, tienes mas monedas en tu perfil!`,
+    });
+    io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
+      _id: notificationId,
+      message: `Tu pago fué exitoso, tienes mas monedas en tu perfil!`,
+      type: 1,
+    });
+  } 
+  console.log(`Payment with paymentId ${sessionId} fullfiled!`);
 
 
   //Pago al tarotista
@@ -107,8 +130,6 @@ module.exports = {
       console.error(`Error with webhook: ${err.message}`);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-
-    console.log(event.type);
     
     if (
         event.type === 'checkout.session.completed'
