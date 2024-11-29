@@ -1,9 +1,14 @@
+const { User } = require("../models");
 const { OpenAIClient } = require("../config");
 
 module.exports = {
   daily: async (req, res, next) => {
     try {
-      const { lastMessages, cartas } = req.body; // cartas:["El Mago", "Loco"] 
+      const { user, lastMessages, cartas } = req.body; // cartas:["El Mago", "Loco"] 
+      const userDB = await User.findById(user._id).exec();
+      if(user.chatCoins < 1) 
+        return res.status(403).json({msg: "No tienes suficientes chatCoins"});
+
       const params = {
         messages: [
           {
@@ -28,13 +33,18 @@ module.exports = {
       } catch (error) {
         response = null;
       }
-
-      return res.send({
-        msg: "OK",
-        response:
-          response?.choices[0].message.content ??
-          "No disponible, intente nuevamente más adelante",
-      });
+      if(response != null && !response.choices[0].message.content.includes("Lo siento, solo puedo responder preguntas relacionadas con el horóscopo")){
+        // Save user chatCoins
+        userDB.chatCoins -= 1;
+        await userDB.save();
+      }
+        return res.send({
+          user,
+          msg: "OK",
+          response:
+            response?.choices[0].message.content ??
+            "No disponible, intente nuevamente más adelante",
+        });
     } catch (error) {
       next(error);
     }
