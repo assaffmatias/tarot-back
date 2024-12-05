@@ -1,4 +1,5 @@
 module.exports = {
+  audio: require("./audio.controller"),
   auth: require("./auth.controller"),
   card: require("./card.controller"),
   message: require("./message.controller"),
