@@ -5,9 +5,14 @@ module.exports = {
   daily: async (req, res, next) => {
     try {
       const { user, lastMessages, cartas } = req.body; // cartas:["El Mago", "Loco"] 
+      console.log(user);
+      
       const userDB = await User.findById(user._id).exec();
-      if(user.chatCoins < 1) 
-        return res.status(403).json({msg: "No tienes suficientes chatCoins"});
+
+      console.log(userDB);
+      
+      if(userDB.chatCoins < 1) 
+        return res.status(200).json({msg: "No tienes suficientes chatCoins", userDB});
 
       const params = {
         messages: [
@@ -38,7 +43,7 @@ module.exports = {
         await userDB.save();
       }
         return res.send({
-          user,
+          userDB,
           msg: "OK",
           response:
             response?.choices[0].message.content ??
