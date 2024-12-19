@@ -3,7 +3,8 @@ const { User, Transaction } = require("../models");
 module.exports = {
   update: async (req, res, next) => {
     try {
-      const { state, google, ...body } = req.body;
+
+      const body = {role: req.body.role, paypal_email: req.body.paypal_email}
 
       const user = await User.findByIdAndUpdate(req.params.id, body, {
         new: true,

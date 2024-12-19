@@ -143,6 +143,7 @@ module.exports = {
       );
       //Capturar orden
       const { paypal_id, token, seller, price } = req.body;
+      const userName = req.body.userName
       console.log("lo que llega", token);
       const { data: captureResponse } = await axios.post(
         `${PAYPAL_API}/v2/checkout/orders/${token}/capture`,
@@ -193,29 +194,32 @@ module.exports = {
       
       const transaction = await Transaction.create({...req.body, payment: payment._id });
 
+      console.log('TRANSACTION:', transaction);
+      
+
 
       if(payment.type === "hire") {
         //Notificacion al cliente
         const notificationId = await createNotification({
           user: transaction.client,
           type: 0,
-          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con el tarotista`,
         });
         io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
           _id: notificationId,
-          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+          message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con el tarotista`,
         });
         
         //Notificacion al vendedor
         const notificationSellerId = await createNotification({
           user: transaction.seller,
           type: 0,
-          message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+          message: `Alguien contrató tus servicios`,
         });
         
         io.to(getSocketId_connected(transaction.seller.valueOf())).emit("addNotification", {
           _id: notificationSellerId,
-          message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+          message: `Alguien contrató tus servicios`,
           type: 0
         });
       }else if(payment.type === "coins") {
@@ -301,23 +305,23 @@ module.exports = {
           const notificationId = await createNotification({
             user: transaction.client,
             type: 0,
-            message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+            message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con el tarotista`,
           });
           io.to(getSocketId_connected(transaction.client.valueOf())).emit("addNotification", {
             _id: notificationId,
-            message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con ${transaction.seller}`,
+            message: `Tu pago fué exitoso, ahora puedes iniciar una conversación con el tarotista`,
           });
           
           //Notificacion al vendedor
           const notificationSellerId = await createNotification({
             user: transaction.seller,
             type: 0,
-            message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+            message: `Alguien contrató tus servicios`,
           });
           
           io.to(getSocketId_connected(transaction.seller.valueOf())).emit("addNotification", {
             _id: notificationSellerId,
-            message: `${transaction.client} contrató tus servicios, envíale un mensaje`,
+            message: `Alguien contrató tus servicios`,
             type: 0
           });
         }else if(payment.type === "coins") {

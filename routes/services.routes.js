@@ -10,7 +10,13 @@ const { serviceIsValid } = require("../helpers");
 
 const router = Router();
 
-router.post("/create", [validateJWT, validationErrors], controller.create);
+router.post("/create", 
+  [
+    // validateJWT, 
+    validationErrors
+  ], 
+  controller.create
+);
 
 router.put(
   "/update/:id",

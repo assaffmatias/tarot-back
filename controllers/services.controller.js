@@ -80,9 +80,9 @@ const ServiceAggregation = ({ skip, limit, query }) => [
 module.exports = {
   create: async (req, res, next) => {
     try {
-      const { name, description, price, tags } = req.body;
+      const { name, description, price, tags, user } = req.body;
 
-      const service = new Service({ name, description, price, tags });
+      const service = new Service({ name, description, price, tags, user });
 
       await service.save();
 
@@ -91,21 +91,26 @@ module.exports = {
       next(error);
     }
   },
-  
+
   update: async (req, res, next) => {
     try {
       const updatedService = await Service.findByIdAndUpdate(
         req.params.id,
-        { price: req.body.price },
+        {
+          name: req.body.name,
+          description: req.body.description,
+          price: req.body.price,
+          tags: req.body.tags,
+        },
         { new: true }
       );
-  
+
       return res.send({ msg: "Servicio actualizado", service: updatedService });
     } catch (error) {
       next(error);
     }
   },
-  
+
   delete: async (req, res, next) => {
     try {
       const service = await Service.findByIdAndUpdate(

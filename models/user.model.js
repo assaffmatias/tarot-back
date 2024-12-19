@@ -20,7 +20,7 @@ const userSchema = new Schema(
     password: { type: String, required: ["La contraseñá es obligatoria"] },
     img: { type: String }, // No es obligatoria, mejor si no la generas,
     paypal_email: { type: String }, //Para pagarle al user
-    chatCoins: { type: Number, default: 0 }, // Para monetizar el chatIA
+    chatCoins: { type: Number, default: 5 }, // Para monetizar el chatIA
   },
   { versionKey: false }
 );

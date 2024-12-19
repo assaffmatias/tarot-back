@@ -11,9 +11,9 @@ const router = Router();
 
 // TODO: Terminar válidaciones
 router.put(
-  "/update",
+  "/update/:id",
   [
-    validateJWT,
+    // validateJWT,
     check("email", "El email no es válido")
       .optional()
       .isEmail()

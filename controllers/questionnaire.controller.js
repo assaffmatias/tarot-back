@@ -46,17 +46,17 @@ module.exports = {
     try {
       const { questions } = req.body;
 
-      const FIFTEEN_DAYS_MS = 86400000 * 15;
+      // const FIFTEEN_DAYS_MS = 86400000 * 15;
 
-      const recentAnswer = await Answer.findOne({
-        date: { $gt: new Date(Date.now() - FIFTEEN_DAYS_MS) },
-      }).lean();
+      // const recentAnswer = await Answer.findOne({
+      //   date: { $gt: new Date(Date.now() - FIFTEEN_DAYS_MS) },
+      // }).lean();
 
-      if (recentAnswer) {
-        throw new Error(
-          `Debes esperar 15 días. Realizaste la prueba el ${recentAnswer.date.toLocaleDateString()}`
-        );
-      }
+      // if (recentAnswer) {
+      //   throw new Error(
+      //     `Debes esperar 15 días. Realizaste la prueba el ${recentAnswer.date.toLocaleDateString()}`
+      //   );
+      // }
 
       const format = Object.entries(questions).map(([key, value]) => ({
         id: key,
@@ -116,6 +116,7 @@ module.exports = {
         data: populatedDoc,
         msg: "",
         title: "",
+        status: ""
       };
 
       if (finalPoints < 15) {
@@ -125,6 +126,7 @@ module.exports = {
       } else {
         response.title = "¡Felicidades ! Has pasado la prueba.";
         response.msg = `Tu puntaje fue ${finalPoints}, lo suficiente para pasar.`;
+        response.status = "ok"
       }
 
       return res.send(response);
