@@ -2,6 +2,8 @@ const { io } = require("../config");
 const { Message, Transaction } = require("../models");
 const { storage } = require("../config");
 const { v4: uuid } = require("uuid");
+const bucket = require('./bucket.controller');
+const { FieldValue } = require("firebase-admin/firestore");
 
 const messagePopulate = [
   { path: "from", select: "userName img" },
@@ -15,12 +17,13 @@ const messagePopulate = [
 
 module.exports = {
   sendMessage: async (req, res, next) => {
+    console.log("In message controller:",req.body);
+    
     try {
       const { message, to, from } = req.body;
 
-      // Obtén los archivos del request
-      const audioFile = req.files?.audio;
-      const imgFile = req.files?.img;
+      // Obtener file
+      const file = req.files
 
       // Crea el nuevo mensaje
       const msg = new Message({
@@ -31,28 +34,28 @@ module.exports = {
       });
 
       // Verifica si hay archivos para cargar (audio o imagen)
-      if (audioFile || imgFile) {
-        const file = audioFile || imgFile; // Usa el archivo disponible
-        const filePath = file.tempFilePath;
-
-        // Sube el archivo a Cloud Storage
-        const [, response] = await storage
-          .bucket("gs://tarotarcano-bfb91.appspot.com")
-          .upload(filePath, {
-            public: true,
-            uploadType: "media",
-            destination: uuid() + "." + file.name.split(".").pop(),
+      if (file) {
+        try {
+          if (file.audio) {
+            const result = await bucket.putObject(file.audio, 'audio/mp3');
+            const audioUrl = result.url;
+            msg.media = {
+              audio: audioUrl
+            };
+          }
+          
+          if (file.img) {
+            const result = await bucket.putObject(file.img,'image/jpeg');
+            const imageUrl = result.url;
+            msg.media = {
+              ...msg.media,
+              img: imageUrl
+            };
+          }
+        } catch (error) {
+          return res.status(400).json({ 
+            error: `Error uploading file: ${error.message}` 
           });
-
-        // Asigna el media en el mensaje según el tipo de archivo
-        if (audioFile) {
-          msg.media = {
-            audio: response.mediaLink, // Guarda el enlace del archivo como audio
-          };
-        } else if (imgFile) {
-          msg.media = {
-            img: response.mediaLink, // Guarda el enlace del archivo como imagen
-          };
         }
       }
 

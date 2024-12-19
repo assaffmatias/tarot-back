@@ -5,7 +5,7 @@ module.exports = {
         //parse audio
         try{
             console.log(req.files)
-            const result = await bucket.putObject(req.files.audio.data);
+            const result = await bucket.putObject(req.files);
             res.status(200).json({ result });
         }catch(error){
             console.error(error);

@@ -51,7 +51,7 @@ class Server {
       if (req.originalUrl === "/api/stripe-webhook") 
           next();
        else 
-          express.json()(req, res, next);
+          express.json({limit:'10mb'})(req, res, next);
       
   });
 
@@ -69,8 +69,6 @@ class Server {
     this.app.use("/app", express.static(join(__dirname, "dist")));
 
     this.app.use(morgan("tiny"));
-
-    this.app.use(express.json({limit: '10mb'}));
 
     this.app.use(express.urlencoded({limit: '10mb', extended: true }));
   }

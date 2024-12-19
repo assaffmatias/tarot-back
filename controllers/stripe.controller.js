@@ -52,7 +52,7 @@ async function fulfillCheckout(sessionId) {
   }
   
   //Guardo en db que se debe pagar al tarot user
-  const paymentValue = price * (1-(COMISION/100));
+  const paymentValue = payment.price * (1-(COMISION/100));
   const payout = await Payout.create({
     user: transaction.seller,
     payed: false,
@@ -141,7 +141,6 @@ module.exports = {
       console.error(`Error with webhook: ${err.message}`);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-    
     if (
         event.type === 'checkout.session.completed'
         || event.type === 'checkout.session.async_payment_succeeded'

@@ -1,35 +1,64 @@
 require("dotenv").config();
 
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_KEY = process.env.AWS_SECRET_KEY;
-const AWS_REGION = process.env.AWS_REGION;
-const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME;
-const AWS_AUDIO_FOLDER = process.env.AWS_AUDIO_FOLDER;
+const CLOUD_NAME=process.env.CLOUD_NAME;
+const API_KEY=process.env.API_KEY;
+const API_SECRET=process.env.API_SECRET;
 
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const cloudinary = require('cloudinary').v2;
+const { v4: uuid } = require('uuid');
 
-const s3 = new S3Client({
-    region: AWS_REGION,
-    credentials: {
-        accessKeyId: AWS_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_KEY
-    }
-});
 
-module.exports = {
-    putObject: async (audioBuffer) => {
-        const params = {
-            Bucket: AWS_BUCKET_NAME,
-            Key: `${AWS_AUDIO_FOLDER}/audio.mp3`,
-            Body: audioBuffer,
-            ContentType: 'audio/mpeg',
-        };
+// Return "https" URLs by setting secure: true
+cloudinary.config({ 
+    cloud_name: CLOUD_NAME, 
+    api_key: API_KEY, 
+    api_secret: API_SECRET
+  });
+
+  module.exports = {
+    putObject: async (file, fileType = 'audio/mp3') => {
+        const filename = `${uuid()}.${fileType.split('/')[1]}`;
+        console.log('Filename:', file);
+        
 
         try {
-            await s3.send(new PutObjectCommand(params));
-            return `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${AWS_AUDIO_FOLDER}/audio.mp3`;
-        } catch(error) {
-            throw new Error(`Error al subir el audio a S3: ${error.message}`);
+            const uploadResult = await new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        resource_type: 'auto',
+                        folder: 'tarot-audios',
+                        public_id: file.name.split('.')[0]
+                    },
+                    (error, result) => {
+                        fs.unlink(file.tempFilePath, (unlinkError) => {
+                            if (unlinkError) console.error('Failed to clean up temp file:', unlinkError);
+                        });
+                        if (error) {
+                            return reject(error);
+                        }
+                        resolve(result);
+                    }
+                );
+                
+                // Use the temporary file path
+                const fs = require('fs');
+                const readStream = fs.createReadStream(file.tempFilePath);
+                readStream.pipe(stream);
+            });
+        
+            console.log('Upload result:', uploadResult);
+            return {
+                success: true,
+                url: uploadResult.secure_url,
+                public_id: uploadResult.public_id
+            };
+        
+        } catch (error) {
+            fs.unlink(file.audio.tempFilePath, (unlinkError) => {
+                if (unlinkError) console.error('Failed to clean up temp file:', unlinkError);
+            });
+            console.error('Upload error:', error);
+            throw new Error(`Failed to upload audio: ${error.message}`);
         }
     }
 };
